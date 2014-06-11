@@ -1,6 +1,7 @@
 package orm;
 
 import com.google.common.base.CaseFormat;
+import orm.utils.PluralUtils;
 
 /**
  * @author mhauck
@@ -9,7 +10,12 @@ public class LowerUnderscoreTableMapper implements TableMapper {
 
     @Override
     public String tableName(Class<?> modelClass) {
-        return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, modelClass.getSimpleName());
+        return PluralUtils.pluralize(CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, modelClass.getSimpleName()));
+    }
+
+    @Override
+    public String fkName(Class<?> modelClass) {
+        return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, modelClass.getSimpleName()) + "_id";
     }
 
     @Override

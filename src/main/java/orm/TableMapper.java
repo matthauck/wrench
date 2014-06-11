@@ -7,6 +7,8 @@ public interface TableMapper {
 
     String tableName(Class<?> modelClass);
 
+    String fkName(Class<?> modelClass);
+
     String columnName(String fieldName);
 
     String fieldName(String columnName);
