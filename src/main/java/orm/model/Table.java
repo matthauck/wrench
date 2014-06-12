@@ -9,4 +9,6 @@ public interface Table {
 
     Columns getColumns();
 
+    // convention for simplicity: all tables must implement a `getId` method
+    int getId();
 }

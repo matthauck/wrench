@@ -12,6 +12,9 @@ import org.springframework.jdbc.core.metadata.TableMetaDataProviderFactory;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.JdbcUtils;
 import orm.model.Table;
+import orm.model.associations.BelongsTo;
+import orm.model.associations.ForeignKey;
+import orm.model.associations.HasMany;
 import orm.types.BooleanTypeMapping;
 import orm.types.RowMapper;
 import orm.types.TypeMapper;
@@ -102,35 +105,45 @@ public class DB {
         return key.longValue();
     }
 
-    public <T extends Table> T find(final long id, final Class<T> beanType) throws SQLException {
+    public <T extends Table> T find(final int id, final Class<T> beanType) throws SQLException {
 
         final String sql = "SELECT * FROM " + tableName(beanType) + " WHERE id = ?";
 
         return fetchOneAndMap(id, beanType, sql);
     }
 
-//
-//    public <T> List<T> joinChildren(WithId bean, Class<T> childBeanType) throws SQLException{
-//        return joinChildren(bean.getId(), bean.getClass(), childBeanType);
-//    }
+    public <T extends Table> List<T> join(HasMany parent, Class<T> childBeanType) throws SQLException {
 
-//    public <T extends Table> List<T> joinChildren(long parentId, Class<?> parentBeanType, Class<T> childBeanType) throws SQLException {
-//
-//        String fk = tableMapper.fkName(parentBeanType);
-//
-//        final String sql = "SELECT * FROM " + tableName(childBeanType) + " WHERE " + fk + " = ?";
-//
-//        return fetchAndMap(parentId, childBeanType, sql);
-//    }
+        ForeignKey fk = parent.hasMany().get(childBeanType);
+        if (fk == null) {
+            throw new IllegalStateException("No HasMany relationship defined on " + parent.getClass() + " for " + childBeanType);
+        }
 
-    private <T extends Table> T fetchOneAndMap(long id, Class<T> beanType, String sql) throws SQLException {
+        final String sql = "SELECT * FROM " + tableName(childBeanType) + " WHERE " + fk.foreignKeyColumn + " = ?";
+
+        return fetchAndMap(parent.getId(), childBeanType, sql);
+    }
+
+    public <T extends Table> T join(BelongsTo child, Class<T> parentBeanType) throws SQLException {
+
+        ForeignKey fk = child.belongsTo().get(parentBeanType);
+        if (fk == null) {
+            throw new IllegalStateException("No BelongsTo relationship defined on " + child.getClass() + " for " + parentBeanType);
+        }
+
+        final String sql = "SELECT * FROM " + tableName(parentBeanType) + " WHERE " + fk.foreignKeyColumn + " = ?";
+
+        return fetchOneAndMap(fk.id.get(), parentBeanType, sql);
+    }
+
+    private <T extends Table> T fetchOneAndMap(int id, Class<T> beanType, String sql) throws SQLException {
         return fetchAndMap(id, beanType, sql, true).get(0);
     }
-    private <T extends Table> List<T> fetchAndMap(long id, Class<T> beanType, String sql) throws SQLException {
+    private <T extends Table> List<T> fetchAndMap(int id, Class<T> beanType, String sql) throws SQLException {
         return fetchAndMap(id, beanType, sql, false);
     }
 
-    private <T extends Table> List<T> fetchAndMap(long id, Class<T> beanType, String sql, boolean singleResult) throws SQLException {
+    private <T extends Table> List<T> fetchAndMap(int id, Class<T> beanType, String sql, boolean singleResult) throws SQLException {
         return transaction((Connection conn) -> {
             try (PreparedStatement statement = conn.prepareStatement(sql)) {
                 statement.setLong(1, id);
