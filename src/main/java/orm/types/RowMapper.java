@@ -12,7 +12,6 @@ import orm.utils.ResultSetUtils;
 /**
  * @author mhauck
  */
-
 public class RowMapper {
 
     private final TypeMapper typeMapper;

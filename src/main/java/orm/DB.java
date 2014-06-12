@@ -10,6 +10,7 @@ import org.springframework.jdbc.core.metadata.TableMetaDataContext;
 import org.springframework.jdbc.core.metadata.TableMetaDataProvider;
 import org.springframework.jdbc.core.metadata.TableMetaDataProviderFactory;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
+import org.springframework.jdbc.support.JdbcUtils;
 import orm.model.Table;
 import orm.types.BooleanTypeMapping;
 import orm.types.RowMapper;
@@ -69,16 +70,25 @@ public class DB {
 
 
     public <T> T transaction(SQLFunc<T> func) throws SQLException {
+        Connection conn = dataSource.getConnection();
+        boolean autoCommitBefore = conn.getAutoCommit();
 
-        try (Connection conn = dataSource.getConnection()) {
+        try {
             conn.setAutoCommit(false);
 
             T result = func.apply(conn);
 
             conn.commit();
             return result;
-        }
 
+        } catch (SQLException e) {
+            conn.rollback();
+            throw e;
+
+        } finally {
+            conn.setAutoCommit(autoCommitBefore);
+            JdbcUtils.closeConnection(conn);
+        }
     }
 
     public long insert(Table bean) throws SQLException {
