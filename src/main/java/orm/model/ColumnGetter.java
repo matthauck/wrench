@@ -3,8 +3,8 @@ package orm.model;
 /**
  * @author mhauck
  */
-public interface WithId {
+public interface ColumnGetter<T> {
 
-    long getId();
+    T get();
 
 }

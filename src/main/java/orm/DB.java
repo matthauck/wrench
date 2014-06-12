@@ -5,15 +5,22 @@ import javax.sql.DataSource;
 import org.apache.commons.dbcp2.*;
 import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPool;
+import org.springframework.beans.BeanUtils;
 import org.springframework.jdbc.core.metadata.TableMetaDataContext;
 import org.springframework.jdbc.core.metadata.TableMetaDataProvider;
 import org.springframework.jdbc.core.metadata.TableMetaDataProviderFactory;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
-import orm.model.WithId;
+import orm.model.Table;
+import orm.types.BooleanTypeMapping;
+import orm.types.RowMapper;
+import orm.types.TypeMapper;
+import orm.types.TypeMapping;
 
 import java.sql.*;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author mhauck
@@ -22,19 +29,19 @@ public class DB {
 
     private final DataSource dataSource;
 
-    private final TableMapper tableMapper;
+    private final RowMapper rowMapper;
     private final TypeMapper typeMapper;
 
-    private final BeanMapper beanMapper;
-
-    private final TableMetaDataContext metaDataContext;
     private final TableMetaDataProvider metaDataProvider;
+
+    private final Map<Class<?>, String> tableNames = new ConcurrentHashMap<>();
 
     public DB(String jdbcUrl) throws SQLException {
 
-        this.tableMapper = new LowerUnderscoreTableMapper();
-        this.typeMapper = new DefaultTypeMapper();
-        this.beanMapper = new BeanMapper(tableMapper, typeMapper);
+        this.typeMapper = new TypeMapper();
+        this.rowMapper = new RowMapper(typeMapper);
+
+        register(new BooleanTypeMapping());
 
         PoolableConnectionFactory connections = new PoolableConnectionFactory(new DriverManagerConnectionFactory(jdbcUrl, null), null);
 
@@ -43,13 +50,21 @@ public class DB {
 
         dataSource = new PoolingDataSource<>(pool);
 
-        metaDataContext = new TableMetaDataContext();
-        metaDataProvider = TableMetaDataProviderFactory.createMetaDataProvider(dataSource, metaDataContext, null);
+        metaDataProvider = TableMetaDataProviderFactory.createMetaDataProvider(dataSource, new TableMetaDataContext(), null);
     }
 
+    public void register(TypeMapping<?> mapping) {
+        typeMapper.register(mapping);
+    }
 
-    private String tableName(Class<?> beanType) {
-        return metaDataProvider.tableNameToUse(tableMapper.tableName(beanType));
+    private <T extends Table> String tableName(Class<T> beanType) {
+        if (!tableNames.containsKey(beanType)) {
+            T newBean = BeanUtils.instantiate(beanType);
+            String tableName = metaDataProvider.tableNameToUse(newBean.getTableName());
+            tableNames.put(beanType, tableName);
+        }
+
+        return tableNames.get(beanType);
     }
 
 
@@ -66,46 +81,46 @@ public class DB {
 
     }
 
-    public long insert(Object bean) throws SQLException {
+    public long insert(Table bean) throws SQLException {
 
         SimpleJdbcInsert inserter = new SimpleJdbcInsert(dataSource);
         inserter.setGeneratedKeyName("id");
 
-        Number key = inserter.withTableName(tableMapper.tableName(bean.getClass()))
-            .executeAndReturnKey(beanMapper.toMap(bean));
+        Number key = inserter.withTableName(bean.getTableName())
+            .executeAndReturnKey(rowMapper.toMap(bean));
 
         return key.longValue();
     }
 
-    public <T> T find(final long id, final Class<T> beanType) throws SQLException {
+    public <T extends Table> T find(final long id, final Class<T> beanType) throws SQLException {
 
         final String sql = "SELECT * FROM " + tableName(beanType) + " WHERE id = ?";
 
         return fetchOneAndMap(id, beanType, sql);
     }
 
+//
+//    public <T> List<T> joinChildren(WithId bean, Class<T> childBeanType) throws SQLException{
+//        return joinChildren(bean.getId(), bean.getClass(), childBeanType);
+//    }
 
-    public <T> List<T> joinChildren(WithId bean, Class<T> childBeanType) throws SQLException{
-        return joinChildren(bean.getId(), bean.getClass(), childBeanType);
-    }
+//    public <T extends Table> List<T> joinChildren(long parentId, Class<?> parentBeanType, Class<T> childBeanType) throws SQLException {
+//
+//        String fk = tableMapper.fkName(parentBeanType);
+//
+//        final String sql = "SELECT * FROM " + tableName(childBeanType) + " WHERE " + fk + " = ?";
+//
+//        return fetchAndMap(parentId, childBeanType, sql);
+//    }
 
-    public <T> List<T> joinChildren(long parentId, Class<?> parentBeanType, Class<T> childBeanType) throws SQLException {
-
-        String fk = tableMapper.fkName(parentBeanType);
-
-        final String sql = "SELECT * FROM " + tableName(childBeanType) + " WHERE " + fk + " = ?";
-
-        return fetchAndMap(parentId, childBeanType, sql);
-    }
-
-    private <T> T fetchOneAndMap(long id, Class<T> beanType, String sql) throws SQLException {
+    private <T extends Table> T fetchOneAndMap(long id, Class<T> beanType, String sql) throws SQLException {
         return fetchAndMap(id, beanType, sql, true).get(0);
     }
-    private <T> List<T> fetchAndMap(long id, Class<T> beanType, String sql) throws SQLException {
+    private <T extends Table> List<T> fetchAndMap(long id, Class<T> beanType, String sql) throws SQLException {
         return fetchAndMap(id, beanType, sql, false);
     }
 
-    private <T> List<T> fetchAndMap(long id, Class<T> beanType, String sql, boolean singleResult) throws SQLException {
+    private <T extends Table> List<T> fetchAndMap(long id, Class<T> beanType, String sql, boolean singleResult) throws SQLException {
         return transaction((Connection conn) -> {
             try (PreparedStatement statement = conn.prepareStatement(sql)) {
                 statement.setLong(1, id);
@@ -126,7 +141,7 @@ public class DB {
                             throw new SQLException("Non-unique result");
                         }
 
-                        T foundObj = beanMapper.fromResultSet(results, beanType);
+                        T foundObj = rowMapper.fromResultSet(results, beanType);
                         found.add(foundObj);
                     }
 
