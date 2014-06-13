@@ -19,11 +19,10 @@ import orm.types.BooleanTypeMapping;
 import orm.types.RowMapper;
 import orm.types.TypeMapper;
 import orm.types.TypeMapping;
+import orm.utils.StringUtils;
 
 import java.sql.*;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -36,25 +35,26 @@ public class DB {
     private final RowMapper rowMapper;
     private final TypeMapper typeMapper;
 
-    private final TableMetaDataProvider metaDataProvider;
+    private final DBInfo dbInfo;
 
     private final Map<Class<?>, String> tableNames = new ConcurrentHashMap<>();
 
-    public DB(String jdbcUrl) throws SQLException {
+
+    public DB(String jdbcUrl, String user, String pass) throws SQLException {
 
         this.typeMapper = new TypeMapper();
         this.rowMapper = new RowMapper(typeMapper);
 
         register(new BooleanTypeMapping());
 
-        PoolableConnectionFactory connections = new PoolableConnectionFactory(new DriverManagerConnectionFactory(jdbcUrl, null), null);
+        PoolableConnectionFactory connections = new PoolableConnectionFactory(new DriverManagerConnectionFactory(jdbcUrl, user, pass), null);
 
         ObjectPool<PoolableConnection> pool = new GenericObjectPool<>(connections);
         connections.setPool(pool);
 
         dataSource = new PoolingDataSource<>(pool);
 
-        metaDataProvider = TableMetaDataProviderFactory.createMetaDataProvider(dataSource, new TableMetaDataContext(), null);
+        dbInfo = new DBInfo(dataSource);
     }
 
     public void register(TypeMapping<?> mapping) {
@@ -64,11 +64,23 @@ public class DB {
     private <T extends Table> String tableName(Class<T> beanType) {
         if (!tableNames.containsKey(beanType)) {
             T newBean = BeanUtils.instantiate(beanType);
-            String tableName = metaDataProvider.tableNameToUse(newBean.getTableName());
+            String tableName = newBean.getTableName();
+
+//            if (dbInfo.storesUpperCaseIdentifiers) {
+//                tableName = tableName.toUpperCase(Locale.ENGLISH);
+//
+//            } else if (dbInfo.storesLowerCaseIdentifiers) {
+//                tableName = tableName.toLowerCase(Locale.ENGLISH);
+//            }
+
             tableNames.put(beanType, tableName);
         }
 
-        return tableNames.get(beanType);
+        return quote(tableNames.get(beanType));
+    }
+
+    private String quote(String identifier) {
+        return dbInfo.identifierQuoteString + identifier + dbInfo.identifierQuoteString;
     }
 
 
@@ -94,20 +106,72 @@ public class DB {
         }
     }
 
-    public long insert(Table bean) throws SQLException {
+    public <T extends Table> T insert(T bean) throws SQLException {
 
-        SimpleJdbcInsert inserter = new SimpleJdbcInsert(dataSource);
-        inserter.setGeneratedKeyName("id");
+        if (!dbInfo.supportsGetGeneratedKeys) {
+            throw new IllegalStateException("Database does not support getting generated keys.");
+        }
 
-        Number key = inserter.withTableName(bean.getTableName())
-            .executeAndReturnKey(rowMapper.toMap(bean));
+        SortedMap<String, Object> values = rowMapper.toMap(bean);
+        List<String> orderedKeys = new ArrayList<>(values.keySet());
 
-        return key.longValue();
+        final String sql = "INSERT INTO " + tableName(bean.getClass())
+            + " (" + StringUtils.joinAndQuote(orderedKeys, dbInfo.identifierQuoteString) + ")"
+            + " VALUES "
+            + " (" + StringUtils.repeat("?", orderedKeys.size()) + ")";
+
+        int id = transaction((Connection conn) -> {
+            PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+
+            int i = 0;
+            for (String key : orderedKeys) {
+                i++;
+                setStatement(i, stmt, values.get(key));
+            }
+
+
+            // do insert
+            stmt.execute();
+
+            // get key!
+            ResultSet keys = stmt.getGeneratedKeys();
+            if (keys.next()) {
+                return keys.getInt(1);
+
+            } else {
+                throw new IllegalStateException("Did not receive a generated key on insert");
+            }
+        });
+
+        bean.setId(id);
+        return bean;
+    }
+
+    private void setStatement(final int i, final PreparedStatement stmt, final Object sqlValue) throws SQLException {
+        if (sqlValue == null) {
+            // set null!
+        } else {
+
+            if (sqlValue instanceof Integer) {
+                stmt.setInt(i, (Integer) sqlValue);
+
+            } else if (sqlValue instanceof Long) {
+                stmt.setLong(i, (Long) sqlValue);
+
+            } else if (sqlValue instanceof String) {
+                stmt.setString(i, (String) sqlValue);
+
+            } else {
+                throw new UnsupportedOperationException("whoops. not supported yet");
+            }
+
+        }
+
     }
 
     public <T extends Table> T find(final int id, final Class<T> beanType) throws SQLException {
 
-        final String sql = "SELECT * FROM " + tableName(beanType) + " WHERE id = ?";
+        final String sql = "SELECT * FROM " + tableName(beanType) + " WHERE " + quote("id") + " = ?";
 
         return fetchOneAndMap(id, beanType, sql);
     }
@@ -119,7 +183,7 @@ public class DB {
             throw new IllegalStateException("No HasMany relationship defined on " + parent.getClass() + " for " + childBeanType);
         }
 
-        final String sql = "SELECT * FROM " + tableName(childBeanType) + " WHERE " + fk.foreignKeyColumn + " = ?";
+        final String sql = "SELECT * FROM " + tableName(childBeanType) + " WHERE " + quote(fk.foreignKeyColumn) + " = ?";
 
         return fetchAndMap(parent.getId(), childBeanType, sql);
     }
@@ -131,7 +195,7 @@ public class DB {
             throw new IllegalStateException("No BelongsTo relationship defined on " + child.getClass() + " for " + parentBeanType);
         }
 
-        final String sql = "SELECT * FROM " + tableName(parentBeanType) + " WHERE " + fk.foreignKeyColumn + " = ?";
+        final String sql = "SELECT * FROM " + tableName(parentBeanType) + " WHERE " + quote(fk.foreignKeyColumn) + " = ?";
 
         return fetchOneAndMap(fk.id.get(), parentBeanType, sql);
     }

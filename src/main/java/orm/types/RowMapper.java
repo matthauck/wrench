@@ -20,11 +20,17 @@ public class RowMapper {
         this.typeMapper = typeMapper;
     }
 
-    public Map<String, Object> toMap(Table object) {
+    public SortedMap<String, Object> toMap(Table object) {
 
-        Map<String, Object> values = new HashMap<>();
+        SortedMap<String, Object> values = new TreeMap<>();
 
         for (Column<?> column : object.getColumns().columns()) {
+
+            // exclude primary key
+            if (column.name.equalsIgnoreCase("id")) {
+                continue;
+            }
+
             final Object javaValue = column.getter.get();
 
             final Object sqlValue;
@@ -37,7 +43,7 @@ public class RowMapper {
             values.put(column.name, sqlValue);
         }
 
-        return Collections.unmodifiableMap(values);
+        return Collections.unmodifiableSortedMap(values);
     }
 
     public <T extends Table> T fromResultSet(ResultSet resultSet, Class<T> beanType) throws SQLException {
