@@ -6,19 +6,12 @@ import org.apache.commons.dbcp2.*;
 import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.springframework.beans.BeanUtils;
-import org.springframework.jdbc.core.metadata.TableMetaDataContext;
-import org.springframework.jdbc.core.metadata.TableMetaDataProvider;
-import org.springframework.jdbc.core.metadata.TableMetaDataProviderFactory;
-import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.JdbcUtils;
 import orm.model.Table;
 import orm.model.associations.BelongsTo;
 import orm.model.associations.ForeignKey;
 import orm.model.associations.HasMany;
-import orm.types.BooleanTypeMapping;
-import orm.types.RowMapper;
-import orm.types.TypeMapper;
-import orm.types.TypeMapping;
+import orm.types.*;
 import orm.utils.StringUtils;
 
 import java.sql.*;
@@ -46,6 +39,7 @@ public class DB {
         this.rowMapper = new RowMapper(typeMapper);
 
         register(new BooleanTypeMapping());
+        register(new BlobTypeMapping());
 
         PoolableConnectionFactory connections = new PoolableConnectionFactory(new DriverManagerConnectionFactory(jdbcUrl, user, pass), null);
 
@@ -129,7 +123,6 @@ public class DB {
                 setStatement(i, stmt, values.get(key));
             }
 
-
             // do insert
             stmt.execute();
 
@@ -161,12 +154,14 @@ public class DB {
             } else if (sqlValue instanceof String) {
                 stmt.setString(i, (String) sqlValue);
 
+            } else if (sqlValue instanceof Blob) {
+                stmt.setBlob(i, (Blob) sqlValue);
+
             } else {
-                throw new UnsupportedOperationException("whoops. not supported yet");
+                throw new UnsupportedOperationException("Data type not supported yet: " + sqlValue.getClass() + "."
+                    + " Maybe you need to register a custom type mapper?");
             }
-
         }
-
     }
 
     public <T extends Table> T find(final int id, final Class<T> beanType) throws SQLException {

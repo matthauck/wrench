@@ -1,6 +1,7 @@
 package orm;
 
 import orm.test.model.Book;
+import orm.test.model.Logo;
 import orm.test.model.User;
 
 /**
@@ -40,6 +41,13 @@ public class Blueprint {
     }
 
 
+    public Logo makeLogo(Book book, byte[] data) {
+        Logo logo = new Logo();
+        logo.setBookId(book.getId());
+        logo.setData(data);
+
+        return logo;
+    }
 
 
 }

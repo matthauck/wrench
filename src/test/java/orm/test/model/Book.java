@@ -13,6 +13,7 @@ public class Book extends BaseTable implements BelongsTo {
 
     private int id;
     private int userId;
+    private boolean read;
     private String title;
     private String description;
 
@@ -23,6 +24,7 @@ public class Book extends BaseTable implements BelongsTo {
         return new Columns()
             .addColumn("id", Integer.class, this::getId, this::setId)
             .addColumn("user_id", Integer.class, this::getUserId, this::setUserId)
+            .addColumn("read", Boolean.class, this::isRead, this::setRead)
             .addColumn("title", String.class, this::getTitle, this::setTitle)
             .addColumn("description", String.class, this::getDescription, this::setDescription)
             .done();
@@ -48,6 +50,14 @@ public class Book extends BaseTable implements BelongsTo {
 
     public void setUserId(int userId) {
         this.userId = userId;
+    }
+
+    public boolean isRead() {
+        return read;
+    }
+
+    public void setRead(boolean read) {
+        this.read = read;
     }
 
     public String getTitle() {
@@ -78,4 +88,5 @@ public class Book extends BaseTable implements BelongsTo {
         Book that = (Book) obj;
         return userId == that.userId && title.equals(that.title);
     }
+
 }
