@@ -8,6 +8,7 @@ Wrench is a simple tool for java that grabs databases and maps them into objects
 * No attempt to be or do everything
 
 Basic setup:
+
 1. Create a database schema 
 2. Create a model for your tables
 3. Define the columns you care about on those tables
