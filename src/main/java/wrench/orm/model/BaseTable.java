@@ -13,5 +13,8 @@ public abstract class BaseTable implements Table {
         return PluralUtils.pluralize(CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, getClass().getSimpleName()));
     }
 
-
+    @Override
+    public boolean isNew() {
+        return getId() <= 0;
+    }
 }

@@ -34,6 +34,62 @@ public class DBTest extends BaseDBTest {
         assertEquals(found.getSalt(), "salty");
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testInsertWithNonNewRecord() throws SQLException {
+        User u1 = blueprint.makeUser();
+        db.insert(u1);
+
+        db.insert(u1);
+    }
+
+    @Test
+    public void testUpdate() throws SQLException {
+        User user = new User();
+        user.setEmail("joe@foo.com");
+        user.setFirstName("joe");
+        user.setLastName("smith");
+        user.setPasswordHash("hash1");
+        user.setSalt("sea");
+
+        db.insert(user);
+
+        user.setEmail("bob@foo.com");
+        user.setFirstName("bob");
+        user.setLastName("jones");
+        user.setPasswordHash("hash2");
+        user.setSalt("rock");
+
+        int changed = db.update(user);
+
+        assertEquals("update should succeed", 1, changed);
+
+        User found = db.find(user.getId(), User.class);
+        assertEquals(found.getId(), user.getId());
+        assertEquals(found.getEmail(), "bob@foo.com");
+        assertEquals(found.getFirstName(), "bob");
+        assertEquals(found.getLastName(), "jones");
+        assertEquals(found.getPasswordHash(), "hash2");
+        assertEquals(found.getSalt(), "rock");
+    }
+
+    @Test
+    public void testUpdateWithWrongId() throws SQLException {
+        User u1 = blueprint.makeUser();
+        db.insert(u1);
+
+        u1.setId(23);
+
+        int changed = db.update(u1);
+
+        assertEquals("update should fail for invalid primary key", 0, changed);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testUpdateWithNewRecord() throws SQLException {
+        User newUser = new User();
+        db.update(newUser);
+    }
+
     @Test
     public void testBoolean() throws SQLException {
         User u1 = blueprint.makeUser();
@@ -46,7 +102,6 @@ public class DBTest extends BaseDBTest {
         Book b2 = blueprint.makeBook("book2", u1);
         b2.setRead(false);
         db.insert(b2);
-
 
         assertTrue(db.find(b1.getId(), Book.class).isRead());
         assertFalse(db.find(b2.getId(), Book.class).isRead());

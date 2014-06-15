@@ -9,6 +9,7 @@ import org.flywaydb.core.Flyway;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
+
 /**
  * @author mhauck
  */
@@ -43,6 +44,7 @@ public class BaseDBTest {
         // simple manual cleanup...
         db.transaction((Connection conn) -> {
             Statement stmt = conn.createStatement();
+            stmt.execute("DELETE FROM \"logos\"");
             stmt.execute("DELETE FROM \"books\"");
             stmt.execute("DELETE FROM \"users\"");
 

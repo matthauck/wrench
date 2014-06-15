@@ -105,6 +105,9 @@ public class DB {
         if (!dbInfo.supportsGetGeneratedKeys) {
             throw new IllegalStateException("Database does not support getting generated keys.");
         }
+        if (!bean.isNew()) {
+            throw new IllegalArgumentException("Cannot insert existing entries. Please call update instead.");
+        }
 
         SortedMap<String, Object> values = rowMapper.toMap(bean);
         List<String> orderedKeys = new ArrayList<>(values.keySet());
@@ -138,6 +141,49 @@ public class DB {
 
         bean.setId(id);
         return bean;
+    }
+
+    public <T extends Table> int update(T bean) throws SQLException {
+
+        if (bean.isNew()) {
+            throw new IllegalArgumentException("Cannot update new entries. Please call insert instead.");
+        }
+
+        SortedMap<String, Object> values = rowMapper.toMap(bean);
+        List<String> orderedKeys = new ArrayList<>(values.keySet());
+
+        final StringBuilder thingsToSet = new StringBuilder();
+        boolean isFirst = true;
+        for (String key : orderedKeys) {
+            if (!isFirst) {
+                thingsToSet.append(", ");
+            } else {
+                isFirst = false;
+            }
+
+            thingsToSet.append(quote(key)).append(" = ?");
+        }
+
+        final String sql = "UPDATE " + tableName(bean.getClass())
+            + " SET " + thingsToSet.toString()
+            + " WHERE " + quote("id") + " = ?";
+
+        return transaction((Connection conn) -> {
+            PreparedStatement stmt = conn.prepareStatement(sql);
+
+            // set the primary key
+            int pkIndex = orderedKeys.size() + 1;
+            stmt.setInt(pkIndex, bean.getId());
+
+            int i = 1;
+            for (String key : orderedKeys) {
+                setStatement(i, stmt, values.get(key));
+                i++;
+            }
+
+            // do update!
+            return stmt.executeUpdate();
+        });
     }
 
     private void setStatement(final int i, final PreparedStatement stmt, final Object sqlValue) throws SQLException {
