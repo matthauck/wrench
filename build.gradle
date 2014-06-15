@@ -18,3 +18,15 @@ dependencies {
     testCompile 'org.flywaydb:flyway-core:3.0'
 
 }
+
+test {
+
+  outputs.upToDateWhen { false }
+
+  testLogging {
+    exceptionFormat "full"
+    showStandardStreams true
+    events "passed", "skipped", "failed"
+  }
+}
+
