@@ -1,7 +1,6 @@
-[![Build Status](https://travis-ci.org/matthauck/wrench.svg?branch=master)](https://travis-ci.org/matthauck/wrench)
-
 Wrench
 ======
+[![Build Status](https://travis-ci.org/matthauck/wrench.svg?branch=master)](https://travis-ci.org/matthauck/wrench)
 
 Wrench is a simple tool for java that grabs databases and maps them into objects. 
 
