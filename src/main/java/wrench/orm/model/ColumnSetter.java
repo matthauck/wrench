@@ -1,4 +1,4 @@
-package orm.model;
+package wrench.orm.model;
 
 /**
  * @author mhauck

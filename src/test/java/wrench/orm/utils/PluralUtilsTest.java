@@ -1,7 +1,7 @@
-package orm.utils;
+package wrench.orm.utils;
 
 import static org.junit.Assert.*;
-import static orm.utils.PluralUtils.*;
+import static wrench.orm.utils.PluralUtils.*;
 
 import org.junit.Test;
 

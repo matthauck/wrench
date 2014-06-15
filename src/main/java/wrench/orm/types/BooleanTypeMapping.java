@@ -1,4 +1,4 @@
-package orm.types;
+package wrench.orm.types;
 
 /**
  * @author mhauck

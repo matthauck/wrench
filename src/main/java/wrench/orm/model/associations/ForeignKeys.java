@@ -1,9 +1,9 @@
-package orm.model.associations;
+package wrench.orm.model.associations;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import orm.model.Table;
+import wrench.orm.model.Table;
 
 /**
  * @author mhauck

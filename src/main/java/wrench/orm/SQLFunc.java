@@ -1,4 +1,4 @@
-package orm;
+package wrench.orm;
 
 import java.sql.Connection;
 import java.sql.SQLException;

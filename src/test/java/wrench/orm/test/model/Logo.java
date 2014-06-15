@@ -1,7 +1,7 @@
-package orm.test.model;
+package wrench.orm.test.model;
 
-import orm.model.BaseTable;
-import orm.model.Columns;
+import wrench.orm.model.BaseTable;
+import wrench.orm.model.Columns;
 
 /**
  * @author mhauck

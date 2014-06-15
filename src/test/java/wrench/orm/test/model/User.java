@@ -1,10 +1,10 @@
-package orm.test.model;
+package wrench.orm.test.model;
 
-import orm.model.BaseTable;
-import orm.model.Columns;
-import orm.model.associations.ForeignKeys;
-import orm.model.associations.HasMany;
-import orm.model.associations.ForeignKey;
+import wrench.orm.model.BaseTable;
+import wrench.orm.model.Columns;
+import wrench.orm.model.associations.ForeignKey;
+import wrench.orm.model.associations.ForeignKeys;
+import wrench.orm.model.associations.HasMany;
 
 /**
  * @author mhauck

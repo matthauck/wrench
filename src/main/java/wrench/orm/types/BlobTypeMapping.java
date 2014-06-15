@@ -1,4 +1,4 @@
-package orm.types;
+package wrench.orm.types;
 
 import javax.sql.rowset.serial.SerialBlob;
 import javax.sql.rowset.serial.SerialException;

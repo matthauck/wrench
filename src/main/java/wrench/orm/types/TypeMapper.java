@@ -1,4 +1,4 @@
-package orm.types;
+package wrench.orm.types;
 
 import java.util.LinkedHashSet;
 import java.util.Set;

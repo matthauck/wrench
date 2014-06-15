@@ -1,4 +1,4 @@
-package orm;
+package wrench.orm;
 
 import static org.junit.Assert.*;
 
@@ -7,9 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.junit.Test;
-import orm.test.model.Book;
-import orm.test.model.Logo;
-import orm.test.model.User;
+import wrench.orm.test.model.*;
 
 /**
  * @author mhauck

@@ -1,4 +1,4 @@
-package orm.utils;
+package wrench.orm.utils;
 
 import java.util.ArrayList;
 import java.util.List;

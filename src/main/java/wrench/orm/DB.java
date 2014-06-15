@@ -1,4 +1,4 @@
-package orm;
+package wrench.orm;
 
 import javax.sql.DataSource;
 
@@ -7,12 +7,12 @@ import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.springframework.beans.BeanUtils;
 import org.springframework.jdbc.support.JdbcUtils;
-import orm.model.Table;
-import orm.model.associations.BelongsTo;
-import orm.model.associations.ForeignKey;
-import orm.model.associations.HasMany;
-import orm.types.*;
-import orm.utils.StringUtils;
+import wrench.orm.model.Table;
+import wrench.orm.model.associations.BelongsTo;
+import wrench.orm.model.associations.ForeignKey;
+import wrench.orm.model.associations.HasMany;
+import wrench.orm.types.*;
+import wrench.orm.utils.StringUtils;
 
 import java.sql.*;
 import java.util.*;

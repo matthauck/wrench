@@ -1,7 +1,7 @@
-package orm.model;
+package wrench.orm.model;
 
 import com.google.common.base.CaseFormat;
-import orm.utils.PluralUtils;
+import wrench.orm.utils.PluralUtils;
 
 /**
  * @author mhauck

@@ -1,4 +1,4 @@
-package orm;
+package wrench.orm;
 
 import javax.sql.DataSource;
 import java.sql.Connection;

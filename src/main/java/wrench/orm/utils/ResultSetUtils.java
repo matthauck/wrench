@@ -1,4 +1,4 @@
-package orm.utils;
+package wrench.orm.utils;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;

@@ -1,8 +1,6 @@
-package orm;
+package wrench.orm;
 
-import orm.test.model.Book;
-import orm.test.model.Logo;
-import orm.test.model.User;
+import wrench.orm.test.model.*;
 
 /**
  * @author mhauck
