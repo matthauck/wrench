@@ -2,11 +2,38 @@ package wrench.orm.utils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author mhauck
  */
 public class StringUtils {
+
+    private static final Pattern titleCaseRegex = Pattern.compile("([A-Z][a-z0-9]*)");
+
+    /**
+     * maps class names to lower underscore table_names
+     */
+    public static String toLowerUnderscore(Class<?> type) {
+        final String className = type.getSimpleName();
+        Matcher matcher = titleCaseRegex.matcher(className);
+
+        StringBuilder lowerUnderscore = new StringBuilder();
+        boolean isFirst = true;
+        while (matcher.find()) {
+            if (!isFirst) {
+                lowerUnderscore.append("_");
+            } else {
+                isFirst = false;
+            }
+
+            lowerUnderscore.append(matcher.group(1).toLowerCase(Locale.ENGLISH));
+        }
+
+        return lowerUnderscore.toString();
+    }
 
     public static String join(List<String> strings) {
         return join(strings, ", ", null);
