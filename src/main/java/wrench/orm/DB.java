@@ -5,14 +5,12 @@ import javax.sql.DataSource;
 import org.apache.commons.dbcp2.*;
 import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPool;
-import org.springframework.beans.BeanUtils;
-import org.springframework.jdbc.support.JdbcUtils;
 import wrench.orm.model.Table;
 import wrench.orm.model.associations.BelongsTo;
 import wrench.orm.model.associations.ForeignKey;
 import wrench.orm.model.associations.HasMany;
 import wrench.orm.types.*;
-import wrench.orm.utils.StringUtils;
+import wrench.orm.utils.*;
 
 import java.sql.*;
 import java.util.*;
@@ -57,7 +55,7 @@ public class DB {
 
     private <T extends Table> String tableName(Class<T> beanType) {
         if (!tableNames.containsKey(beanType)) {
-            T newBean = BeanUtils.instantiate(beanType);
+            T newBean = MiscUtils.instantiate(beanType);
             String tableName = newBean.getTableName();
 
 //            if (dbInfo.storesUpperCaseIdentifiers) {
@@ -96,7 +94,7 @@ public class DB {
 
         } finally {
             conn.setAutoCommit(autoCommitBefore);
-            JdbcUtils.closeConnection(conn);
+            MiscUtils.close(conn);
         }
     }
 
@@ -217,7 +215,7 @@ public class DB {
         return fetchOneAndMap(id, beanType, sql);
     }
 
-    public <T extends Table> List<T> join(HasMany parent, Class<T> childBeanType) throws SQLException {
+    public <T extends Table, P extends Table> List<T> join(HasMany parent, Class<T> childBeanType) throws SQLException {
 
         ForeignKey fk = parent.hasMany().get(childBeanType);
         if (fk == null) {

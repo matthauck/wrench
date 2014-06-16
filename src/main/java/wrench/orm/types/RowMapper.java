@@ -4,9 +4,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
-import org.springframework.beans.BeanUtils;
 import wrench.orm.model.Column;
 import wrench.orm.model.Table;
+import wrench.orm.utils.MiscUtils;
 import wrench.orm.utils.ResultSetUtils;
 
 /**
@@ -50,7 +50,7 @@ public class RowMapper {
 
         Map<String, Object> values = ResultSetUtils.readResultRow(resultSet);
 
-        T newBean = BeanUtils.instantiate(beanType);
+        T newBean = MiscUtils.instantiate(beanType);
 
         for (String columnName : values.keySet()) {
 
