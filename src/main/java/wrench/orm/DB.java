@@ -10,6 +10,8 @@ import wrench.orm.model.associations.BelongsTo;
 import wrench.orm.model.associations.ForeignKey;
 import wrench.orm.model.associations.HasMany;
 import wrench.orm.select.WhereBuilder;
+import wrench.orm.select.WhereClause;
+import wrench.orm.select.WhereOps;
 import wrench.orm.types.*;
 import wrench.orm.utils.*;
 
@@ -287,4 +289,80 @@ public class DB {
         return new WhereBuilder<>(type, this);
     }
 
+    public <T extends Table> List<T> select(Class<T> beanType, List<WhereClause<?>> whereClauses) throws SQLException {
+
+        final String sql = "SELECT * FROM " + tableName(beanType) + " WHERE " + whereSql(whereClauses);
+
+        return doSelectAndMap(beanType, sql, whereClauses, false);
+    }
+
+    public <T extends Table> T selectOne(Class<T> beanType, List<WhereClause<?>> whereClauses) throws SQLException {
+
+        final String sql = "SELECT * FROM " + tableName(beanType) + " WHERE " + whereSql(whereClauses);
+
+        return doSelectAndMap(beanType, sql, whereClauses, true).get(0);
+    }
+
+    // this looks mysteriously similar to the update sql above...
+    String whereSql(List<WhereClause<?>> whereClauses) {
+        String thingsToSet = "";
+        boolean isFirst = true;
+        for (WhereClause<?> where : whereClauses) {
+            if (!isFirst) {
+                thingsToSet += " AND ";
+            } else {
+                isFirst = false;
+            }
+
+            thingsToSet += quote(where.fieldName) + " " + where.op.getOp();
+
+            if (where.op.takesArgument()) {
+                thingsToSet += " ?";
+            }
+        }
+
+        return thingsToSet;
+    }
+
+    private <T extends Table> List<T> doSelectAndMap(Class<T> beanType, String sql, List<WhereClause<?>> whereClauses, boolean singleResult) throws SQLException {
+        return transaction((Connection conn) -> {
+            try (PreparedStatement statement = conn.prepareStatement(sql)) {
+
+                int i = 1;
+                for (WhereClause<?> where : whereClauses) {
+                    if (where.op.takesArgument()) {
+                        setStatement(i, statement, where.value);
+                        i++;
+                    }
+                }
+
+                boolean success = statement.execute();
+
+                if (!success) {
+                    return null;
+                }
+
+                try (ResultSet results = statement.getResultSet()) {
+
+                    List<T> found = new LinkedList<>();
+
+                    while (results.next()) {
+
+                        if (singleResult && found.size() > 0) {
+                            throw new SQLException("Non-unique result");
+                        }
+
+                        T foundObj = rowMapper.fromResultSet(results, beanType);
+                        found.add(foundObj);
+                    }
+
+                    if (singleResult && found.size() == 0) {
+                        throw new SQLException("No element found");
+                    }
+
+                    return found;
+                }
+            }
+        });
+    }
 }

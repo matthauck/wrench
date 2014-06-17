@@ -1,5 +1,6 @@
 package wrench.orm.select;
 
+import java.sql.SQLException;
 import java.util.*;
 
 import wrench.orm.DB;
@@ -19,7 +20,7 @@ public class WhereBuilder<T extends Table> {
 
     private static final byte[] testByteArray = new byte[]{ 1 };
 
-    final List<String> clauses = new LinkedList<>();
+    final List<WhereClause<?>> clauses = new LinkedList<>();
 
     public WhereBuilder(Class<T> type, DB db) {
         this.db = db;
@@ -35,12 +36,23 @@ public class WhereBuilder<T extends Table> {
         @SuppressWarnings("unchecked")
         final Class<V> valueType = (Class<V>) value.getClass();
 
-        //String fieldName = findFieldName(ref, valueType);
+        final String fieldName = findFieldName(ref, valueType);
 
-        return null;
+        if (fieldName == null) {
+            throw new IllegalArgumentException("Could not find field name for given column reference");
+        }
 
+        clauses.add(new WhereClause<>(fieldName, value, op));
+        return this;
     }
 
+    public List<T> find() throws SQLException {
+        return db.select(type, clauses);
+    }
+
+    public T findOne() throws SQLException {
+        return db.selectOne(type, clauses);
+    }
 
     <V> String findFieldName(ColumnGetter<T, V> ref, Class<V> valueType) {
 

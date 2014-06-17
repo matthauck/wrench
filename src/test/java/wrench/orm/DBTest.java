@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.function.Supplier;
 
 import org.junit.Test;
@@ -172,10 +173,33 @@ public class DBTest extends BaseDBTest {
 
         db.insert(user);
 
+        List<User> foundList;
 
-        db.select(User.class).where(User::getFirstName, "joe", WhereOps.EQL);
+        foundList = db.select(User.class)
+            .where(User::getFirstName, "joe", WhereOps.EQL)
+            .find();
 
+        assertEquals(1, foundList.size());
 
+        foundList = db.select(User.class)
+            .where(User::getFirstName, "joe", WhereOps.EQL)
+            .where(User::getEmail, "joe%", WhereOps.LIKE)
+            .find();
+
+        assertEquals(1, foundList.size());
+
+        foundList = db.select(User.class)
+            .where(User::getFirstName, "bob", WhereOps.EQL)
+            .find();
+
+        assertEquals(0, foundList.size());
+
+        foundList = db.select(User.class)
+            .where(User::getFirstName, "joe", WhereOps.EQL)
+            .where(User::getEmail, "bob%", WhereOps.LIKE)
+            .find();
+
+        assertEquals(0, foundList.size());
 
     }
 }
