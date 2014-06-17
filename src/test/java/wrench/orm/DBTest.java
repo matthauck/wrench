@@ -5,8 +5,10 @@ import static org.junit.Assert.*;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.function.Supplier;
 
 import org.junit.Test;
+import wrench.orm.select.WhereOps;
 import wrench.orm.test.model.*;
 
 /**
@@ -159,4 +161,21 @@ public class DBTest extends BaseDBTest {
         assertEquals(db.join(b2, User.class), u2);
     }
 
+    @Test
+    public void testSelect() throws SQLException {
+        User user = new User();
+        user.setEmail("joe@foo.com");
+        user.setFirstName("joe");
+        user.setLastName("smith");
+        user.setPasswordHash("hash1");
+        user.setSalt("sea");
+
+        db.insert(user);
+
+
+        db.select(User.class).where(User::getFirstName, "joe", WhereOps.EQL);
+
+
+
+    }
 }

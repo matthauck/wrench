@@ -20,13 +20,13 @@ public class Book extends BaseTable implements BelongsTo {
     public Book() { }
 
     @Override
-    public Columns getColumns() {
-        return new Columns()
-            .addColumn("id", Integer.class, this::getId, this::setId)
-            .addColumn("user_id", Integer.class, this::getUserId, this::setUserId)
-            .addColumn("read", Boolean.class, this::isRead, this::setRead)
-            .addColumn("title", String.class, this::getTitle, this::setTitle)
-            .addColumn("description", String.class, this::getDescription, this::setDescription)
+    public Columns<Book> getColumns() {
+        return new Columns<>(Book.class)
+            .addColumn("id", Integer.class, Book::getId, Book::setId)
+            .addColumn("user_id", Integer.class, Book::getUserId, Book::setUserId)
+            .addColumn("read", Boolean.class, Book::isRead, Book::setRead)
+            .addColumn("title", String.class, Book::getTitle, Book::setTitle)
+            .addColumn("description", String.class, Book::getDescription, Book::setDescription)
             .done();
     }
 

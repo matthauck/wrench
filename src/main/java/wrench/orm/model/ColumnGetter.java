@@ -3,8 +3,8 @@ package wrench.orm.model;
 /**
  * @author mhauck
  */
-public interface ColumnGetter<T> {
+public interface ColumnGetter<T extends Table, V> {
 
-    T get();
+    V get(T bean);
 
 }

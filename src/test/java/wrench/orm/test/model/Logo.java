@@ -13,14 +13,13 @@ public class Logo extends BaseTable {
     private byte[] data;
 
     @Override
-    public Columns getColumns() {
-        return new Columns()
-            .addColumn("id", Integer.class, this::getId, this::setId)
-            .addColumn("book_id", Integer.class, this::getBookId, this::setBookId)
-            .addColumn("data", byte[].class, this::getData, this::setData)
+    public Columns<Logo> getColumns() {
+        return new Columns<>(Logo.class)
+            .addColumn("id", Integer.class, Logo::getId, Logo::setId)
+            .addColumn("book_id", Integer.class, Logo::getBookId, Logo::setBookId)
+            .addColumn("data", byte[].class, Logo::getData, Logo::setData)
             .done();
     }
-
 
     public int getId() {
         return id;
@@ -45,4 +44,5 @@ public class Logo extends BaseTable {
     public void setData(byte[] data) {
         this.data = data;
     }
+
 }

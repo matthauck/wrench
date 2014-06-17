@@ -9,6 +9,7 @@ import wrench.orm.model.Table;
 import wrench.orm.model.associations.BelongsTo;
 import wrench.orm.model.associations.ForeignKey;
 import wrench.orm.model.associations.HasMany;
+import wrench.orm.select.WhereBuilder;
 import wrench.orm.types.*;
 import wrench.orm.utils.*;
 
@@ -281,5 +282,9 @@ public class DB {
         });
     }
 
+
+    public <T extends Table> WhereBuilder<T> select(Class<T> type) {
+        return new WhereBuilder<>(type, this);
+    }
 
 }

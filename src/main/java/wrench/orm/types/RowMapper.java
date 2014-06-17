@@ -20,18 +20,21 @@ public class RowMapper {
         this.typeMapper = typeMapper;
     }
 
-    public SortedMap<String, Object> toMap(Table object) {
+    public <T extends Table> SortedMap<String, Object> toMap(T object) {
 
         SortedMap<String, Object> values = new TreeMap<>();
 
-        for (Column<?> column : object.getColumns().columns()) {
+        @SuppressWarnings("unchecked")
+        final Collection<Column<T, ?>> columns = object.getColumns().columns();
+
+        for (Column<T, ?> column : columns) {
 
             // exclude primary key
             if (column.name.equalsIgnoreCase("id")) {
                 continue;
             }
 
-            final Object javaValue = column.getter.get();
+            final Object javaValue = column.getter.get(object);
 
             final Object sqlValue;
             if (javaValue != null) {
@@ -55,23 +58,25 @@ public class RowMapper {
         for (String columnName : values.keySet()) {
 
             final Object sqlValue = values.get(columnName);
-            final Column<?> column = newBean.getColumns().column(columnName);
 
-            setColumnValue(column, sqlValue);
+            @SuppressWarnings("unchecked")
+            final Column<T, ?> column = newBean.getColumns().column(columnName);
+
+            setColumnValue(newBean, column, sqlValue);
         }
 
         return newBean;
     }
 
     // need a sub-method here for generics to kick in properly
-    private <C> void setColumnValue(Column<C> column, Object sqlValue) {
+    private <T extends Table, C> void setColumnValue(T bean, Column<T, C> column, Object sqlValue) {
         // this property is not defined for this table class. ignore
         if (column == null) {
             return;
         }
 
         final C javaValue = typeMapper.fromSql(sqlValue, column.type);
-        column.setter.set(javaValue);
+        column.setter.set(bean, javaValue);
     }
 
 }

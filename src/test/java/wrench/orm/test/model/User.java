@@ -21,14 +21,14 @@ public class User extends BaseTable implements HasMany {
     public User() { }
 
     @Override
-    public Columns getColumns() {
-        return new Columns()
-            .addColumn("id", Integer.class, this::getId, this::setId)
-            .addColumn("first_name", String.class, this::getFirstName, this::setFirstName)
-            .addColumn("last_name", String.class, this::getLastName, this::setLastName)
-            .addColumn("email", String.class, this::getEmail, this::setEmail)
-            .addColumn("salt", String.class, this::getSalt, this::setSalt)
-            .addColumn("password_hash", String.class, this::getPasswordHash, this::setPasswordHash)
+    public Columns<User> getColumns() {
+        return new Columns<>(User.class)
+            .addColumn("id", Integer.class, User::getId, User::setId)
+            .addColumn("first_name", String.class, User::getFirstName, User::setFirstName)
+            .addColumn("last_name", String.class, User::getLastName, User::setLastName)
+            .addColumn("email", String.class, User::getEmail, User::setEmail)
+            .addColumn("salt", String.class, User::getSalt, User::setSalt)
+            .addColumn("password_hash", String.class, User::getPasswordHash, User::setPasswordHash)
             .done();
     }
 
