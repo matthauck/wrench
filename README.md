@@ -29,7 +29,8 @@ I variously found the following weaknesses:
 * Difficulty mapping results to objects
 * Difficulty working with auto-incrementing private keys
 * Difficulty integrating into web frameworks
-* Proliferation of DAO and manager objects 
+* Proliferation of DAO and manager classes 
+* Proliferation of `implicit` session parameters
 * Associations should be fetched exactly when you want them to be
 
 Cool things to note
