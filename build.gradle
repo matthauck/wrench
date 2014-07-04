@@ -3,7 +3,7 @@ apply plugin: 'java'
 sourceCompatibility = 1.8
 
 group = "com.github.matthauck"
-version = '0.1'
+version = '0.1-SNAPSHOT'
 
 repositories {
     mavenCentral()
@@ -46,7 +46,7 @@ task sourcesJar(type: Jar) {
 }
 
 artifacts {
-    archives javadocJar, sourcesJar
+    archives jar, javadocJar, sourcesJar
 }
 
 signing {
