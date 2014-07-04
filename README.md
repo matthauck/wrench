@@ -58,6 +58,50 @@ Usage
 
 *See [test code](https://github.com/matthauck/wrench/blob/master/src/test/java/wrench/orm/DBTest.java) for now for examples*
 
+Build integration
+-----------------
+
+1. Add Sonatype snapshots repo: "https://oss.sonatype.org/content/repositories/snapshots"
+2. Add dependency for group: "com.github.matthauck", name: "wrench", version: "0.1-SNAPSHOT"
+
+### Gradle
+
+    repositories {
+        mavenCentral()
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+    }
+
+    dependencies {
+        compile 'com.github.matthauck:wrench:0.1-SNAPSHOT'
+    }
+
+
+### SBT
+
+    resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+
+    libraryDependencies ++= Seq(
+        "com.github.matthauck" % "wrench" % "0.1-SNAPSHOT"
+    )
+
+### Maven
+
+    <repositories>
+        <repository>
+            <id>Sonatype Snapshots</id>
+            <name>Sonatype Snapshots</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </repository>
+    </repositories>
+    <dependencies>
+        <dependency>
+            <groupId>com.github.matthauck</groupId>
+            <artifactId>wrench</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+
+
 Development
 -----------
 
